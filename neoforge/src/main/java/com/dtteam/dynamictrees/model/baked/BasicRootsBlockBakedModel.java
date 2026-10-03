@@ -36,6 +36,11 @@ public class BasicRootsBlockBakedModel extends BasicBranchBlockBakedModel {
 
     private final BakedModel[][] sleeveEndFaces = new BakedModel[6][8];
 
+    @Override
+    protected boolean useNhShapes() {
+        return false;
+    }
+
     public BasicRootsBlockBakedModel(IGeometryBakingContext customData, ResourceLocation barkTextureLocation, ResourceLocation ringsTextureLocation, Function<Material, TextureAtlasSprite> spriteGetter) {
         super(customData, barkTextureLocation, ringsTextureLocation, spriteGetter);
         initModels();

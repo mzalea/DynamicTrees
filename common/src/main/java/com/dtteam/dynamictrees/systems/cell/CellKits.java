@@ -392,8 +392,69 @@ public class CellKits {
 
     };
 
+    /**
+     * Flat crown pads (7 across, 2 deep, open underneath, 45 leaves against deciduous' 80) so broadleaf crowns form
+     * tiers with sky between them while keeping about the footprint they had.
+     */
+    public static final CellKit PAD = new CellKit(DynamicTrees.location("pad")) {
+
+        private final Cell padBranch = new Cell() {
+            @Override
+            public int getValue() {
+                return 6;
+            }
+
+            final int[] map = {0, 4, 6, 6, 6, 6};
+
+            @Override
+            public int getValueFromSide(Direction side) {
+                return map[side.ordinal()];
+            }
+
+        };
+
+        private final Cell[] padLeafCells = {
+                CellNull.NULL_CELL,
+                new PadLeafCell(1),
+                new PadLeafCell(2),
+                new PadLeafCell(3),
+                new PadLeafCell(4),
+                new PadLeafCell(5),
+                new PadLeafCell(6),
+                new PadLeafCell(7)
+        };
+
+        private final BasicSolver padSolver = new BasicSolver(new short[]{0x0615, 0x0524, 0x0513, 0x0423, 0x0412, 0x0311, 0x0211});
+
+        @Override
+        public Cell getCellForLeaves(int hydro) {
+            return padLeafCells[hydro];
+        }
+
+        @Override
+        public Cell getCellForBranch(int radius, int meta) {
+            return radius == 1 ? padBranch : CellNull.NULL_CELL;
+        }
+
+        @Override
+        public SimpleVoxmap getLeafCluster() {
+            return LeafClusters.PAD;
+        }
+
+        @Override
+        public CellSolver getCellSolver() {
+            return padSolver;
+        }
+
+        @Override
+        public int getDefaultHydration() {
+            return 4;
+        }
+
+    };
+
     public static void register(final Registry<CellKit> registry) {
-        registry.registerAll(DECIDUOUS, CONIFER, ACACIA, DARK_OAK, BARE, PALM, NETHER_FUNGUS, AZALEA);
+        registry.registerAll(DECIDUOUS, CONIFER, ACACIA, DARK_OAK, BARE, PALM, NETHER_FUNGUS, AZALEA, PAD);
     }
 
     /**

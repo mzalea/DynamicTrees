@@ -1,5 +1,13 @@
 package com.dtteam.dynamictrees.event.handler;
 
+import com.dtteam.dynamictrees.model.nh.FringeLeavesBakedModel;
+import com.dtteam.dynamictrees.model.nh.NhFoliage;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import com.dtteam.dynamictrees.DynamicTrees;
 import com.dtteam.dynamictrees.block.leaves.DynamicLeavesBlock;
 import com.dtteam.dynamictrees.block.leaves.LeavesProperties;
@@ -139,10 +147,11 @@ public class ClientModEventHandler {
         }
         // Register Leaves Colorizers
         for (DynamicLeavesBlock leaves : LeavesProperties.REGISTRY.getAll().stream().filter(lp -> lp.getDynamicLeavesBlock().isPresent()).map(lp -> lp.getDynamicLeavesBlock().get()).collect(Collectors.toSet())) {
-            event.register((state, level, pos, tintIndex) ->
-                            isValidPos(level, pos) && TreeHelper.isLeaves(state.getBlock()) ?
-                                    ((DynamicLeavesBlock) state.getBlock()).getLeavesProperties().foliageColorMultiplier(state, level, pos) : magenta,
-                    leaves);
+            event.register((state, level, pos, tintIndex) -> {
+                        if (!isValidPos(level, pos) || !TreeHelper.isLeaves(state.getBlock())) return magenta;
+                        LeavesProperties props = ((DynamicLeavesBlock) state.getBlock()).getLeavesProperties();
+                        return NhFoliage.adjust(props.foliageColorMultiplier(state, level, pos), props, state, level, pos, tintIndex);
+                    }, leaves);
         }
     }
 
@@ -195,6 +204,24 @@ public class ClientModEventHandler {
     public static void onModelModifyBakingResultResult(ModelEvent.ModifyBakingResult event) {
         // Put bonsai pot baked model into its model location.
         event.getModels().computeIfPresent(new ModelResourceLocation(DynamicTrees.location("potted_sapling"), ""), (k, val) -> new BakedModelBlockPottedSapling(val));
+        // Leaves get the fringe wherever their model is a plain cube; palm fronds and odd shapes are left alone.
+        RandomSource rand = RandomSource.create(42);
+        for (LeavesProperties lp : LeavesProperties.REGISTRY.getAll()) {
+            if (lp.getDynamicLeavesBlock().isEmpty()) continue;
+            for (BlockState state : lp.getDynamicLeavesBlock().get().getStateDefinition().getPossibleStates()) {
+                ModelResourceLocation loc = BlockModelShaper.stateToModelLocation(state);
+                BakedModel base = event.getModels().get(loc);
+                if (base == null || base instanceof FringeLeavesBakedModel || !isCube(base, state, rand)) continue;
+                event.getModels().put(loc, new FringeLeavesBakedModel(base, base.getParticleIcon(ModelData.EMPTY)));
+            }
+        }
+    }
+
+    private static boolean isCube(BakedModel model, BlockState state, RandomSource rand) {
+        for (Direction d : Direction.values()) {
+            if (model.getQuads(state, d, rand, ModelData.EMPTY, null).isEmpty()) return false;
+        }
+        return true;
     }
 
     @SubscribeEvent

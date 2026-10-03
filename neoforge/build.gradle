@@ -70,3 +70,21 @@ neoForge {
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// New Haven: unit tests for the pure geometry, colour and leaf-automaton code.
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'net.neoforged:testframework:21.1.80'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+neoForge {
+    unitTest {
+        enable()
+        testedMod = mods.dynamictrees
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

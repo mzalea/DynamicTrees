@@ -672,6 +672,11 @@ public class LeavesProperties extends RegistryEntry<LeavesProperties> implements
     }
 
 //    
+    /** True when the treepack gave these leaves their own colour; otherwise they take the primitive leaves' tint. */
+    public boolean hasOwnColor() {
+        return colorNumber != null || colorString != null;
+    }
+
     private void processColor() {
         int color = -1;
         if (this.colorNumber != null) {

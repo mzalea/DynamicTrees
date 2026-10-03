@@ -4,6 +4,7 @@ import com.dtteam.dynamictrees.block.branch.BranchBlock;
 import com.dtteam.dynamictrees.block.branch.ThickBranchBlock;
 import com.dtteam.dynamictrees.model.ModelHelper;
 import com.dtteam.dynamictrees.model.modeldata.ModelConnections;
+import com.dtteam.dynamictrees.model.nh.BranchQuads;
 import com.dtteam.dynamictrees.tree.family.Family;
 import com.dtteam.dynamictrees.utility.CoordUtils;
 import com.dtteam.dynamictrees.utility.CoordUtils.Surround;
@@ -51,7 +52,9 @@ public class ThickBranchBlockBakedModel extends BasicBranchBlockBakedModel {
     public ThickBranchBlockBakedModel(IGeometryBakingContext customData, ResourceLocation barkTextureLocation, ResourceLocation ringsTextureLocation,
                                       ResourceLocation thickRingsTextureLocation, Function<Material, TextureAtlasSprite> spriteGetter) {
         super(customData, barkTextureLocation, ringsTextureLocation, spriteGetter);
-        initThickModels(spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, thickRingsTextureLocation)));
+        TextureAtlasSprite thickRings = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, thickRingsTextureLocation));
+        initThickModels(thickRings);
+        this.nh = new BranchQuads(barkTexture, ringsTexture, mossTexture, thickRings);
     }
 
     public void initThickModels(TextureAtlasSprite thickRingsTexture) {
@@ -173,6 +176,17 @@ public class ThickBranchBlockBakedModel extends BasicBranchBlockBakedModel {
         }
 
         coreRadius = Mth.clamp(coreRadius, 9, 24);
+
+        if (nh != null) {
+            ModelConnections data = extraData.get(ModelConnections.CONNECTIONS_PROPERTY);
+            int[] conn = data != null ? data.getAllRadii().clone() : new int[6];
+            Direction ring = data != null ? data.getRingOnly() : null;
+            int twig = data != null && data.getFamily().isValid() ? data.getFamily().getPrimaryThickness() : 1;
+            int n = 0;
+            for (int i : conn) n += i != 0 ? 1 : 0;
+            if (n == 0 && ring != null) return Collections.emptyList();
+            return nh.thick(coreRadius, conn, twig, ring, data != null ? data.getSoilDepth() : -1, data != null ? data.getPosHash() : 0);
+        }
 
         List<BakedQuad> quads = new ArrayList<>(30);
 

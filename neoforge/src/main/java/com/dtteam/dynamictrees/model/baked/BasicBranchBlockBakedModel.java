@@ -3,6 +3,9 @@ package com.dtteam.dynamictrees.model.baked;
 import com.dtteam.dynamictrees.block.branch.BranchBlock;
 import com.dtteam.dynamictrees.model.ModelHelper;
 import com.dtteam.dynamictrees.model.modeldata.ModelConnections;
+import com.dtteam.dynamictrees.model.nh.BranchQuads;
+import com.dtteam.dynamictrees.tree.TreeHelper;
+import net.minecraft.util.Mth;
 import com.google.common.collect.Maps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
@@ -47,6 +50,10 @@ public class BasicBranchBlockBakedModel implements IDynamicBakedModel {
     protected final BakedModel[][] cores = new BakedModel[3][8]; // 8 Cores for 3 axis with the bark texture all all 6 sides rotated appropriately.
     protected final BakedModel[] rings = new BakedModel[8]; // 8 Cores with the ring textures on all 6 sides.
 
+    protected final TextureAtlasSprite mossTexture;
+    /** The New Haven look (chamfered logs, bark by position, buttresses, stubs, moss). */
+    protected BranchQuads nh;
+
     public BasicBranchBlockBakedModel(IGeometryBakingContext customData, ResourceLocation barkTextureLocation, ResourceLocation ringsTextureLocation, Function<Material, TextureAtlasSprite> spriteGetter) {
         this.blockModel = new BlockModel(null, new ArrayList<>(), new HashMap<>(), false, BlockModel.GuiLight.FRONT, ItemTransforms.NO_TRANSFORMS, new ArrayList<>());
         if (customData.getRenderTypeHint() != null){
@@ -54,7 +61,9 @@ public class BasicBranchBlockBakedModel implements IDynamicBakedModel {
         }
         this.barkTexture = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, barkTextureLocation));
         this.ringsTexture = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, ringsTextureLocation));
+        this.mossTexture = spriteGetter.apply(new Material(InventoryMenu.BLOCK_ATLAS, ResourceLocation.withDefaultNamespace("block/moss_block")));
         initModels();
+        if (useNhShapes()) this.nh = new BranchQuads(barkTexture, ringsTexture, mossTexture, null);
     }
 
     private void initModels() {
@@ -185,10 +194,41 @@ public class BasicBranchBlockBakedModel implements IDynamicBakedModel {
         }
     }
 
+    /** Whether this model draws with {@link BranchQuads}; models that build on the stock geometry opt out. */
+    protected boolean useNhShapes() {
+        return true;
+    }
+
     @NotNull
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
         if (state == null || side != null) return Collections.emptyList();
+        if (nh != null) return nhQuads(state, extraData);
+        return stockQuads(state, rand, extraData, renderType);
+    }
+
+    private List<BakedQuad> nhQuads(BlockState state, ModelData extraData) {
+        final int coreRadius = getRadius(state);
+        if (coreRadius > 8) return Collections.emptyList();
+        int[] connections = new int[]{0, 0, 0, 0, 0, 0};
+        Direction forceRingDir = null;
+        int soilDepth = -1, hash = 0;
+        ModelConnections connectionsData = extraData.get(ModelConnections.CONNECTIONS_PROPERTY);
+        if (connectionsData != null) {
+            connections = connectionsData.getAllRadii().clone();
+            forceRingDir = connectionsData.getRingOnly();
+            soilDepth = connectionsData.getSoilDepth();
+            hash = connectionsData.getPosHash();
+        }
+        int numConnections = 0;
+        for (int i : connections) numConnections += (i != 0) ? 1 : 0;
+        if (numConnections == 0 && forceRingDir != null) return nh.ringOnly(coreRadius, forceRingDir);
+        final Direction sourceDir = getSourceDir(coreRadius, connections);
+        final Direction ringDir = (numConnections == 1 && sourceDir != null) ? sourceDir.getOpposite() : null;
+        return nh.branch(coreRadius, connections, sourceDir, ringDir, soilDepth, hash);
+    }
+
+    protected List<BakedQuad> stockQuads(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
 
         final int coreRadius = getRadius(state);
         if (coreRadius > 8) return Collections.emptyList();
@@ -261,12 +301,24 @@ public class BasicBranchBlockBakedModel implements IDynamicBakedModel {
     public ModelData getModelData(@NotNull BlockAndTintGetter world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData tileData) {
         ModelConnections modelConnections;
         if (state.getBlock() instanceof BranchBlock branchBlock) {
-            modelConnections = new ModelConnections(branchBlock.getConnectionData(world, pos, state)).setFamily(branchBlock.getFamily());
+            modelConnections = new ModelConnections(branchBlock.getConnectionData(world, pos, state)).setFamily(branchBlock.getFamily())
+                    .setPlacement(soilDepth(world, pos), (int) Mth.getSeed(pos.getX(), pos.getY(), pos.getZ()));
         } else {
             modelConnections = new ModelConnections();
         }
 
         return modelConnections.toModelData(tileData);
+    }
+
+    /** Branch blocks straight down to the rooty soil (0 = sitting on it), or -1 if it is more than 4 away. */
+    protected static int soilDepth(BlockAndTintGetter world, BlockPos pos) {
+        BlockPos.MutableBlockPos p = pos.mutable();
+        for (int i = 0; i <= 4; i++) {
+            BlockState below = world.getBlockState(p.move(Direction.DOWN));
+            if (TreeHelper.isRooty(below)) return i;
+            if (!TreeHelper.isBranch(below)) return -1;
+        }
+        return -1;
     }
 
     /**

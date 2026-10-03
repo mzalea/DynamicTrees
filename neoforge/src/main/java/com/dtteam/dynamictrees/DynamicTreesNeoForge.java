@@ -33,6 +33,10 @@ public class DynamicTreesNeoForge {
         container.registerConfig(ModConfig.Type.SERVER, DTConfigs.SERVER_CONFIG);
         container.registerConfig(ModConfig.Type.COMMON, DTConfigs.COMMON_CONFIG);
         container.registerConfig(ModConfig.Type.CLIENT, DTConfigs.CLIENT_CONFIG);
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            container.registerConfig(ModConfig.Type.CLIENT, com.dtteam.dynamictrees.model.nh.NhRenderConfig.SPEC, "dynamictrees-nh-client.toml");
+            eventBus.addListener(com.dtteam.dynamictrees.model.nh.NhRenderConfig::onReload);
+        }
 
         NeoForgeRegistryHandler.setup(DynamicTrees.MOD_ID, eventBus);
 

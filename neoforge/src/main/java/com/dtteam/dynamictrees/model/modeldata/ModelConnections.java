@@ -17,6 +17,8 @@ public class ModelConnections extends Connections {
 
     private Direction ringOnly = null;
     private Family family = Family.NULL_FAMILY;
+    private int soilDepth = -1;
+    private int posHash = 0;
 
     public ModelConnections() {}
 
@@ -50,6 +52,22 @@ public class ModelConnections extends Connections {
 
     public Family getFamily() {
         return family;
+    }
+
+    /** Branch blocks between this one and the rooty soil (0 = sitting on it), or -1 when not known or further. */
+    public int getSoilDepth() {
+        return soilDepth;
+    }
+
+    /** A stable hash of the block position, for render-only variety. */
+    public int getPosHash() {
+        return posHash;
+    }
+
+    public ModelConnections setPlacement(int soilDepth, int posHash) {
+        this.soilDepth = soilDepth;
+        this.posHash = posHash;
+        return this;
     }
 
     public Direction getRingOnly() {
