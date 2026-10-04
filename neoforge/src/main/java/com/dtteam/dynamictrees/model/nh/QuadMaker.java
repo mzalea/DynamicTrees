@@ -51,11 +51,14 @@ public final class QuadMaker {
         }
     }
 
-    /** Both sides of a thin plane (fringe leaves): the face and its reverse. */
+    /**
+     * Both sides of a thin plane (fringe leaves): the face and its reverse. Unshaded, so a lip seen edge-on or from
+     * below does not draw as a dark seam along the crown.
+     */
     public static void plane(List<BakedQuad> out, Direction face, float x0, float y0, float z0, float x1, float y1, float z1,
                              TextureAtlasSprite sprite, int tint) {
-        rect(out, face, x0, y0, z0, x1, y1, z1, sprite, tint, UvMode.WORLD, LogAxis.Y, true);
-        rect(out, face.getOpposite(), x0, y0, z0, x1, y1, z1, sprite, tint, UvMode.WORLD, LogAxis.Y, true);
+        rect(out, face, x0, y0, z0, x1, y1, z1, sprite, tint, UvMode.WORLD, LogAxis.Y, false);
+        rect(out, face.getOpposite(), x0, y0, z0, x1, y1, z1, sprite, tint, UvMode.WORLD, LogAxis.Y, false);
     }
 
     private static float[] cuts(float a, float b) {
