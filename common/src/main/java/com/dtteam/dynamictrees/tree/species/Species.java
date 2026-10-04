@@ -220,6 +220,8 @@ public class Species extends RegistryEntry<Species> implements Resettable<Specie
      * How quickly the branch thickens on its own without branch merges [default = 0.3]
      */
     protected float tapering = 0.3f;
+    /** New Haven: share of {@link #tapering} added along straight stretches with nothing branching off (1 = stock). */
+    protected float boleTaper = 1.0f;
     /**
      * The probability that the direction decider will choose up out of the other possible direction weights [default =
      * 2]
@@ -1304,6 +1306,22 @@ public class Species extends RegistryEntry<Species> implements Resettable<Specie
 
     public void setTapering(float tapering) {
         this.tapering = tapering;
+    }
+
+    public void setBoleTaper(float boleTaper) {
+        this.boleTaper = boleTaper;
+    }
+
+    public float getBoleTaper() {
+        return boleTaper;
+    }
+
+    /**
+     * Tapering for one block of branch: the full value where other branches join (the pipe model thickens there),
+     * {@link #boleTaper} of it along a clear stretch, so trunks stay columnar up to the crown instead of coning.
+     */
+    public float getTapering(boolean joined) {
+        return joined ? tapering : tapering * boleTaper;
     }
 
     public void setUpProbability(int upProbability) {

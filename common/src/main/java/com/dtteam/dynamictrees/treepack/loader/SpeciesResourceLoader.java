@@ -91,6 +91,7 @@ public final class SpeciesResourceLoader extends JsonRegistryResourceLoader<Spec
 
         this.reloadAppliers
                 .register("tapering", Float.class, Species::setTapering)
+                .register("bole_taper", Float.class, Species::setBoleTaper)
                 .register("up_probability", Integer.class, Species::setUpProbability)
                 .register("lowest_branch_height", Integer.class, Species::setLowestBranchHeight)
                 .register("signal_energy", Float.class, Species::setSignalEnergy)

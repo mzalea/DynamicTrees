@@ -56,6 +56,7 @@ public class InflatorNode implements NodeInspector {
         if (branch != null) {
             float areaAccum = radius * radius;//Start by accumulating the branch we just came from
             boolean isTwig = true;
+            boolean joined = false;//New Haven: whether any other branch joins here (decides the taper)
 
             for (Direction dir : Direction.values()) {
                 if (!dir.equals(fromDir)) {//Don't count where the signal originated from
@@ -72,6 +73,7 @@ public class InflatorNode implements NodeInspector {
                     if (branch.isSameTree(treepart)) {
                         int branchRadius = treepart.getRadius(deltaBlockState);
                         areaAccum += branchRadius * branchRadius;
+                        joined = true;
                     }
                 }
             }
@@ -85,7 +87,7 @@ public class InflatorNode implements NodeInspector {
                 }
             } else {
                 //The new branch should be the square root of all of the sums of the areas of the branches coming into it.
-                radius = (float) Math.sqrt(areaAccum) + (species.getTapering() * species.getWorldGenTaperingFactor());
+                radius = (float) Math.sqrt(areaAccum) + (species.getTapering(joined) * species.getWorldGenTaperingFactor());
 
                 //Ensure the branch is never inflated past it's species maximum
                 if (radius > maxRadius) {

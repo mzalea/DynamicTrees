@@ -12,13 +12,14 @@ public class GrowthLogicKits {
     public static final GrowthLogicKit AZALEA = new AzaleaLogic(DynamicTrees.location("azalea"));
     public static final GrowthLogicKit NETHER_FUNGUS = new NetherFungusLogic(DynamicTrees.location("nether_fungus"));
     public static final GrowthLogicKit PALM = new PalmGrowthLogic(DynamicTrees.location("palm"));
+    public static final GrowthLogicKit SPREADING = new SpreadingLogic(DynamicTrees.location("spreading"));
 
     //Root logic kits
     public static final GrowthLogicKit MANGROVE_ROOTS = new MangroveRootsLogic(DynamicTrees.location("mangrove_roots"));
 
     public static void register(final Registry<GrowthLogicKit> registry) {
         //Tree logic kits
-        registry.registerAll(DARK_OAK, CONIFER, JUNGLE, AZALEA, NETHER_FUNGUS, PALM);
+        registry.registerAll(DARK_OAK, CONIFER, JUNGLE, AZALEA, NETHER_FUNGUS, PALM, SPREADING);
         //Root logic kits
         registry.registerAll(MANGROVE_ROOTS);
     }

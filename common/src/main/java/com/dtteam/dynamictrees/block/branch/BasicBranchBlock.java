@@ -320,6 +320,7 @@ public class BasicBranchBlock extends BranchBlock implements SimpleWaterloggedBl
         float areaAccum = signal.radius * signal.radius;// Start by accumulating the branch we just came from
 
         boolean theresPods = false;
+        boolean joined = false;// New Haven: whether any other branch joins here (decides the taper)
         for (Direction dir : Direction.values()) {
             if (!dir.equals(originDir) && !dir.equals(targetDir)) {// Don't count where the signal originated from or the branch we just came back from
                 BlockPos deltaPos = pos.relative(dir);
@@ -333,6 +334,7 @@ public class BasicBranchBlock extends BranchBlock implements SimpleWaterloggedBl
                 if (isSameTree(treepart)) {
                     int branchRadius = treepart.getRadius(blockState);
                     areaAccum += branchRadius * branchRadius;
+                    joined = true;
                 }
                 if (blockState.getBlock() instanceof OffsetablePodBlock) theresPods = true;
             }
@@ -345,7 +347,7 @@ public class BasicBranchBlock extends BranchBlock implements SimpleWaterloggedBl
 
             // The new branch should be the square root of all of the sums of the areas of the branches coming into it.
             // But it shouldn't be smaller than it's current size(prevents the instant slimming effect when chopping off branches)
-            signal.radius = Mth.clamp((float) Math.sqrt(areaAccum) + species.getTapering(), getRadius(currBlockState), maxRadius);// WOW!
+            signal.radius = Mth.clamp((float) Math.sqrt(areaAccum) + species.getTapering(joined), getRadius(currBlockState), maxRadius);// WOW!
             int targetRadius = (int) Math.floor(signal.radius);
             //if the tree has pods then growth needs to cause updates, otherwise don't bother (for performance)
             int flags = theresPods ? 3 : 2;
