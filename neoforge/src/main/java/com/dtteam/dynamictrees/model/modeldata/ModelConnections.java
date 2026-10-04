@@ -19,6 +19,7 @@ public class ModelConnections extends Connections {
     private Family family = Family.NULL_FAMILY;
     private int soilDepth = -1;
     private int posHash = 0;
+    private int groundMask = 0;
 
     public ModelConnections() {}
 
@@ -64,9 +65,15 @@ public class ModelConnections extends Connections {
         return posHash;
     }
 
-    public ModelConnections setPlacement(int soilDepth, int posHash) {
+    /** Bit per horizontal direction (2D data value) with solid ground under the whole reach of a buttress root. */
+    public int getGroundMask() {
+        return groundMask;
+    }
+
+    public ModelConnections setPlacement(int soilDepth, int posHash, int groundMask) {
         this.soilDepth = soilDepth;
         this.posHash = posHash;
+        this.groundMask = groundMask;
         return this;
     }
 

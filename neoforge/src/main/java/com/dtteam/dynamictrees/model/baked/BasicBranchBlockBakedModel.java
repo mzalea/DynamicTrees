@@ -212,20 +212,21 @@ public class BasicBranchBlockBakedModel implements IDynamicBakedModel {
         if (coreRadius > 8) return Collections.emptyList();
         int[] connections = new int[]{0, 0, 0, 0, 0, 0};
         Direction forceRingDir = null;
-        int soilDepth = -1, hash = 0;
+        int soilDepth = -1, hash = 0, ground = 0;
         ModelConnections connectionsData = extraData.get(ModelConnections.CONNECTIONS_PROPERTY);
         if (connectionsData != null) {
             connections = connectionsData.getAllRadii().clone();
             forceRingDir = connectionsData.getRingOnly();
             soilDepth = connectionsData.getSoilDepth();
             hash = connectionsData.getPosHash();
+            ground = connectionsData.getGroundMask();
         }
         int numConnections = 0;
         for (int i : connections) numConnections += (i != 0) ? 1 : 0;
         if (numConnections == 0 && forceRingDir != null) return nh.ringOnly(coreRadius, forceRingDir);
         final Direction sourceDir = getSourceDir(coreRadius, connections);
         final Direction ringDir = (numConnections == 1 && sourceDir != null) ? sourceDir.getOpposite() : null;
-        return nh.branch(coreRadius, connections, sourceDir, ringDir, soilDepth, hash);
+        return nh.branch(coreRadius, connections, sourceDir, ringDir, soilDepth, hash, ground);
     }
 
     protected List<BakedQuad> stockQuads(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
@@ -301,13 +302,31 @@ public class BasicBranchBlockBakedModel implements IDynamicBakedModel {
     public ModelData getModelData(@NotNull BlockAndTintGetter world, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData tileData) {
         ModelConnections modelConnections;
         if (state.getBlock() instanceof BranchBlock branchBlock) {
+            int depth = soilDepth(world, pos);
             modelConnections = new ModelConnections(branchBlock.getConnectionData(world, pos, state)).setFamily(branchBlock.getFamily())
-                    .setPlacement(soilDepth(world, pos), (int) Mth.getSeed(pos.getX(), pos.getY(), pos.getZ()));
+                    .setPlacement(depth, (int) Mth.getSeed(pos.getX(), pos.getY(), pos.getZ()),
+                            depth == 0 ? groundMask(world, pos, branchBlock.getRadius(state)) : 0);
         } else {
             modelConnections = new ModelConnections();
         }
 
         return modelConnections.toModelData(tileData);
+    }
+
+    /** Sides with solid ground under every block a buttress root on that side would reach over. */
+    protected static int groundMask(BlockAndTintGetter world, BlockPos pos, int radius) {
+        int reach = BranchQuads.flareReachBlocks(radius);
+        int mask = 0;
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+        for (Direction d : Direction.Plane.HORIZONTAL) {
+            boolean ground = true;
+            for (int k = 1; k <= reach && ground; k++) {
+                p.setWithOffset(pos, d.getStepX() * k, -1, d.getStepZ() * k);
+                ground = world.getBlockState(p).isFaceSturdy(world, p, Direction.UP);
+            }
+            if (ground) mask |= 1 << d.get2DDataValue();
+        }
+        return mask;
     }
 
     /** Branch blocks straight down to the rooty soil (0 = sitting on it), or -1 if it is more than 4 away. */

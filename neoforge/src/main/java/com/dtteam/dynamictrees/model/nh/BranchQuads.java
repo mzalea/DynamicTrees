@@ -127,8 +127,9 @@ public final class BranchQuads {
      * @param sourceDir   the side the branch grows from (decides the core's axis), or null
      * @param ringDir     the side that shows rings (a cut or terminating end), or null
      * @param soilDepth   branch blocks down to the rooty soil, -1 if unknown
+     * @param ground      sides (2D data value bits) with solid ground under a buttress root's reach
      */
-    public List<BakedQuad> branch(int r, int[] conn, @Nullable Direction sourceDir, @Nullable Direction ringDir, int soilDepth, int hash) {
+    public List<BakedQuad> branch(int r, int[] conn, @Nullable Direction sourceDir, @Nullable Direction ringDir, int soilDepth, int hash, int ground) {
         boolean c = NhRenderConfig.on(NhRenderConfig.CHAMFER);
         int ch = c ? 1 : 0;
         Direction.Axis coreAxis = sourceDir == null ? Direction.Axis.Y : sourceDir.getAxis();
@@ -160,12 +161,12 @@ public final class BranchQuads {
             if (start < 8) add(out, sleeves[ch][(d.ordinal() * 9 + s) * 9 + start]);
             if (s == 1) add(out, twigEnds[d.ordinal()]);
         }
-        if (upright) addDetails(out, r, c, conn, depth, hash);
+        if (upright) addDetails(out, r, c, conn, depth, hash, ground);
         return out;
     }
 
     /** Quads for a thick trunk block (radius 9..24); its geometry spills over the 3x3 blocks around it. */
-    public List<BakedQuad> thick(int r, int[] conn, int twigRadius, @Nullable Direction ringDir, int soilDepth, int hash) {
+    public List<BakedQuad> thick(int r, int[] conn, int twigRadius, @Nullable Direction ringDir, int soilDepth, int hash, int ground) {
         boolean c = NhRenderConfig.on(NhRenderConfig.CHAMFER);
         int ch = c ? 1 : 0;
         List<BakedQuad> out = new ArrayList<>(48);
@@ -188,7 +189,7 @@ public final class BranchQuads {
                 add(out, d == Direction.UP ? thickTopBark[ch][r] : thickBotBark[ch][r]);
             }
         }
-        addDetails(out, r, c, conn, soilDepth, hash);
+        addDetails(out, r, c, conn, soilDepth, hash, ground);
         return out;
     }
 
@@ -209,10 +210,10 @@ public final class BranchQuads {
     // ------------------------------------------------------------------------------------------------------------
     // Render-only details on upright trunks
 
-    private void addDetails(List<BakedQuad> out, int r, boolean c, int[] conn, int depth, int hash) {
-        if (depth == 0 && r >= 4 && NhRenderConfig.on(NhRenderConfig.ROOT_FLARE)) {
+    private void addDetails(List<BakedQuad> out, int r, boolean c, int[] conn, int depth, int hash, int ground) {
+        if (depth == 0 && r >= 4 && ground != 0 && NhRenderConfig.on(NhRenderConfig.ROOT_FLARE)) {
             int variant = hash & 15;
-            add(out, details.computeIfAbsent(key(1, r, variant, c ? 1 : 0), k -> arr(buttresses(r, c, variant))));
+            add(out, details.computeIfAbsent(key(1, r, variant, (c ? 1 : 0) | ground << 1), k -> arr(buttresses(r, c, variant, ground))));
         }
         boolean bare = conn[2] + conn[3] + conn[4] + conn[5] == 0 && conn[0] > 0 && conn[1] > 0;
         if (bare && r >= 3 && (depth < 0 || depth >= 2) && Math.floorMod(hash >>> 8, 5) == 0 && NhRenderConfig.on(NhRenderConfig.STUBS)) {
@@ -225,12 +226,22 @@ public final class BranchQuads {
         return ((long) kind << 40) | ((long) r << 24) | ((long) variant << 8) | extra;
     }
 
-    /** 3 or 4 stepped buttresses on the cardinal sides, sized by the trunk. */
-    List<BakedQuad> buttresses(int r, boolean c, int variant) {
+    /** Longest a buttress root reaches past the bark, in pixels (before its per-root variation of +-1). */
+    static int flareLength(int r) {
+        return clamp(Math.round(r * 0.4f), 2, 6);
+    }
+
+    /** How many blocks out from the trunk block a buttress can reach, so the ground under all of them can be checked. */
+    public static int flareReachBlocks(int r) {
+        return (int) Math.ceil((r + flareLength(r) + 1 + 8) / 16.0) - 1;
+    }
+
+    /** 3 or 4 stepped buttresses on the cardinal sides with ground under them, sized by the trunk. */
+    List<BakedQuad> buttresses(int r, boolean c, int variant, int ground) {
         List<BakedQuad> out = new ArrayList<>();
         int cut = c ? ChamferProfile.cut(r) : 0;
-        int length = clamp(Math.round(r * 0.55f), 2, 10);
-        int height = clamp(Math.round(r * 1.1f), 3, 15);
+        int length = flareLength(r);
+        int height = clamp(Math.round(r * 0.9f), 3, 12);
         int width = clamp(Math.round(r * 0.5f), 2, 7);
         int count = 3 + (variant & 1);
         int skip = (variant >> 1) & 3;
@@ -238,6 +249,7 @@ public final class BranchQuads {
             Direction d = HORIZONTALS[k];
             if (count == 3 && k == skip) continue;
             made++;
+            if ((ground & 1 << d.get2DDataValue()) == 0) continue;     // over a drop: no root hanging in the air
             int h = (variant * 31 + k * 17) & 7;                      // 0..7 per flare
             int len = Math.max(2, length + (h % 3) - 1);
             int ht = Math.max(3, height + (h % 5) - 2);

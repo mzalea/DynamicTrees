@@ -4,6 +4,8 @@ import com.dtteam.dynamictrees.model.nh.FringeLeavesBakedModel;
 import com.dtteam.dynamictrees.model.nh.NhFoliage;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import java.util.List;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
@@ -212,7 +214,10 @@ public class ClientModEventHandler {
                 ModelResourceLocation loc = BlockModelShaper.stateToModelLocation(state);
                 BakedModel base = event.getModels().get(loc);
                 if (base == null || base instanceof FringeLeavesBakedModel || !isCube(base, state, rand)) continue;
-                event.getModels().put(loc, new FringeLeavesBakedModel(base, base.getParticleIcon(ModelData.EMPTY)));
+                // one plain textured face per side; models with overlays (fruit, blossom layers) keep their own look
+                List<BakedQuad> up = base.getQuads(state, Direction.UP, rand, ModelData.EMPTY, null);
+                if (up.size() != 1) continue;
+                event.getModels().put(loc, new FringeLeavesBakedModel(base, up.get(0).getSprite(), up.get(0).isTinted()));
             }
         }
     }

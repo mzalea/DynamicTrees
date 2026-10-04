@@ -304,6 +304,16 @@ public abstract class BranchBlock extends BlockWithDynamicHardness implements Tr
         return RenderShape.MODEL;
     }
 
+    /**
+     * New Haven: logs are drawn with their corners cut back, so not even a full-width log covers its whole block
+     * face. An empty occlusion shape keeps the faces of the ground and blocks around a trunk from being hidden
+     * (which showed as see-through slits), and lets light past like any other partial branch.
+     */
+    @Override
+    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return Shapes.empty();
+    }
+
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         byte[] radii = new byte[7];

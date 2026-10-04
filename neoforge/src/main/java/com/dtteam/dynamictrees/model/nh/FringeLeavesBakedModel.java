@@ -35,12 +35,18 @@ public class FringeLeavesBakedModel extends BakedModelWrapper<BakedModel> {
     public static final int FRINGE_TINT = 1;
 
     private final TextureAtlasSprite leaves;
+    private final int tint;
     private final List<BakedQuad>[] fringe;
 
+    /**
+     * @param leaves the texture the leaf block shows (its first face), so the fringe is the same leaf
+     * @param tinted whether that face is tinted; untinted leaves (pre-coloured textures) get untinted fringe
+     */
     @SuppressWarnings("unchecked")
-    public FringeLeavesBakedModel(BakedModel base, TextureAtlasSprite leaves) {
+    public FringeLeavesBakedModel(BakedModel base, TextureAtlasSprite leaves, boolean tinted) {
         super(base);
         this.leaves = leaves;
+        this.tint = tinted ? FRINGE_TINT : -1;
         this.fringe = new List[64 * 4];
     }
 
@@ -80,14 +86,14 @@ public class FringeLeavesBakedModel extends BakedModelWrapper<BakedModel> {
     private List<BakedQuad> fringe(int key) {
         List<BakedQuad> l = fringe[key];
         if (l == null) {
-            l = build(key & 63, key >> 6, leaves);
+            l = build(key & 63, key >> 6, leaves, tint);
             fringe[key] = l;
         }
         return l;
     }
 
     /** The extra planes for one set of open sides; pixels in block space. */
-    static List<BakedQuad> build(int open, int variant, TextureAtlasSprite sprite) {
+    static List<BakedQuad> build(int open, int variant, TextureAtlasSprite sprite, int tint) {
         List<BakedQuad> out = new ArrayList<>();
         int lip = 2 + (variant & 1);
         int hang = 3 + (variant >> 1);
@@ -108,13 +114,13 @@ public class FringeLeavesBakedModel extends BakedModelWrapper<BakedModel> {
                     lo[ga] = -len;
                     hi[ga] = 0;
                 }
-                QuadMaker.plane(out, f, lo[0], lo[1], lo[2], hi[0], hi[1], hi[2], sprite, FRINGE_TINT);
+                QuadMaker.plane(out, f, lo[0], lo[1], lo[2], hi[0], hi[1], hi[2], sprite, tint);
             }
         }
         if ((open & 1 << Direction.DOWN.ordinal()) != 0) {
             // a short curtain under the leaf, crossing at its middle
-            QuadMaker.plane(out, Direction.EAST, 8, -hang, 0, 8, 0, 16, sprite, FRINGE_TINT);
-            QuadMaker.plane(out, Direction.SOUTH, 0, -hang, 8, 16, 0, 8, sprite, FRINGE_TINT);
+            QuadMaker.plane(out, Direction.EAST, 8, -hang, 0, 8, 0, 16, sprite, tint);
+            QuadMaker.plane(out, Direction.SOUTH, 0, -hang, 8, 16, 0, 8, sprite, tint);
         }
         return List.copyOf(out);
     }

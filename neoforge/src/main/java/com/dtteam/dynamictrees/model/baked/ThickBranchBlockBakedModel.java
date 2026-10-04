@@ -185,7 +185,8 @@ public class ThickBranchBlockBakedModel extends BasicBranchBlockBakedModel {
             int n = 0;
             for (int i : conn) n += i != 0 ? 1 : 0;
             if (n == 0 && ring != null) return Collections.emptyList();
-            return nh.thick(coreRadius, conn, twig, ring, data != null ? data.getSoilDepth() : -1, data != null ? data.getPosHash() : 0);
+            return nh.thick(coreRadius, conn, twig, ring, data != null ? data.getSoilDepth() : -1, data != null ? data.getPosHash() : 0,
+                    data != null ? data.getGroundMask() : 0);
         }
 
         List<BakedQuad> quads = new ArrayList<>(30);
