@@ -6,7 +6,6 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Log geometry in the canonical frame (log along y, block centre 8): chamfered prisms, end caps and ring ends. */
@@ -42,26 +41,5 @@ public final class LogShapes {
         for (int[] c : ChamferProfile.capRects(rects(r, chamfer))) {
             QuadMaker.rect(out, up ? Direction.UP : Direction.DOWN, 8 + c[0], y, 8 + c[1], 8 + c[2], y, 8 + c[3], sprite, -1, mode, axis, true);
         }
-    }
-
-    /** A box in the canonical frame (pixels), every face but the ones listed in {@code skip}. */
-    public static void box(List<BakedQuad> out, float x0, float y0, float z0, float x1, float y1, float z1, TextureAtlasSprite sprite,
-                           LogAxis axis, Direction... skip) {
-        List<Direction> skipped = List.of(skip);
-        for (Direction d : Direction.values()) {
-            if (skipped.contains(d)) continue;
-            switch (d) {
-                case UP -> QuadMaker.rect(out, d, x0, y1, z0, x1, y1, z1, sprite, -1, UvMode.WORLD, axis, true);
-                case DOWN -> QuadMaker.rect(out, d, x0, y0, z0, x1, y0, z1, sprite, -1, UvMode.WORLD, axis, true);
-                case NORTH -> QuadMaker.rect(out, d, x0, y0, z0, x1, y1, z0, sprite, -1, UvMode.WORLD, axis, true);
-                case SOUTH -> QuadMaker.rect(out, d, x0, y0, z1, x1, y1, z1, sprite, -1, UvMode.WORLD, axis, true);
-                case WEST -> QuadMaker.rect(out, d, x0, y0, z0, x0, y1, z1, sprite, -1, UvMode.WORLD, axis, true);
-                case EAST -> QuadMaker.rect(out, d, x1, y0, z0, x1, y1, z1, sprite, -1, UvMode.WORLD, axis, true);
-            }
-        }
-    }
-
-    public static List<BakedQuad> list() {
-        return new ArrayList<>(8);
     }
 }
