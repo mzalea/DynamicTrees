@@ -19,9 +19,11 @@ public final class NhFoliage {
     private NhFoliage() {}
 
     public static int adjust(int base, LeavesProperties props, BlockState state, BlockAndTintGetter level, BlockPos pos, int tintIndex) {
-        int c = base;
+        // Leaves whose own block has no colour handler come back white; tinted geometry on them (palm fronds) would
+        // stay grey, so give it the biome's foliage colour like any other leaf.
+        int c = (base & 0xFFFFFF) == 0xFFFFFF ? BiomeColors.getAverageFoliageColor(level, pos) : base;
         double blend = NhRenderConfig.num(NhRenderConfig.FOLIAGE_GRASS_BLEND);
-        if (blend > 0 && followsBiome(props)) {
+        if (blend > 0 && (followsBiome(props) || (base & 0xFFFFFF) == 0xFFFFFF)) {
             c = FoliageBlend.mix(c, BiomeColors.getAverageGrassColor(level, pos), blend);
         }
         int hydration = state.hasProperty(LeavesBlock.DISTANCE) ? state.getValue(LeavesBlock.DISTANCE) : 1;
