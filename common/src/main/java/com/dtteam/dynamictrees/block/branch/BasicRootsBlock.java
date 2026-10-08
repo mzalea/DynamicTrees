@@ -462,7 +462,10 @@ public class BasicRootsBlock extends BranchBlock implements SimpleWaterloggedBlo
 
         boolean didRot = species.rot(level, pos, neigh & 0x0F, radius, fertility, rand, true, false); // Unreinforced branches are destroyed.
 
-        if (rapid && didRot) {// Speedily postRot back dead branches if this block rotted
+        // New Haven: only follow the rot on if this block is really gone. During worldgen a block in a chunk the
+        // generator may not write is left standing while rot still reports it removed, and two such neighbours sent
+        // each other back and forth until the worker overflowed its stack and the chunk never finished generating.
+        if (rapid && didRot && level.getBlockState(pos).getBlock() != this) {// Speedily postRot back dead branches if this block rotted
             for (Direction dir : Direction.values()) {// The logic here is that if this block rotted then
                 BlockPos neighPos = pos.relative(dir);// the neighbors might be rotted too.
                 BlockState neighState = level.getBlockState(neighPos);
