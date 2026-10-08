@@ -453,8 +453,86 @@ public class CellKits {
 
     };
 
+    /**
+     * New Haven: a narrow column (Mediterranean cypress). The conifer automaton with less water: a twig passes 2 to
+     * every side instead of 3, so its leaves reach one block out instead of two, and the top makes a short spire.
+     */
+    public static final CellKit COLUMN = new CellKit(DynamicTrees.location("column")) {
+
+        private final Cell columnBranch = new Cell() {
+            @Override
+            public int getValue() {
+                return 5;
+            }
+
+            @Override
+            public int getValueFromSide(Direction side) {
+                return 2;
+            }
+        };
+
+        private final Cell columnTopBranch = new Cell() {
+            final int[] map = {2, 4, 2, 2, 2, 2};
+
+            @Override
+            public int getValue() {
+                return 5;
+            }
+
+            @Override
+            public int getValueFromSide(Direction side) {
+                return map[side.ordinal()];
+            }
+        };
+
+        private final Cell[] columnLeafCells = {
+                CellNull.NULL_CELL,
+                new ConiferLeafCell(1),
+                new ConiferLeafCell(2),
+                new ConiferLeafCell(3),
+                new ConiferLeafCell(4),
+                new ConiferLeafCell(5),
+                new ConiferLeafCell(6),
+                new ConiferLeafCell(7)
+        };
+
+        private final BasicSolver columnSolver = new BasicSolver(new short[]{0x0514, 0x0413, 0x0312, 0x0211});
+
+        @Override
+        public Cell getCellForLeaves(int hydro) {
+            return columnLeafCells[hydro];
+        }
+
+        @Override
+        public Cell getCellForBranch(int radius, int meta) {
+            if (meta == MetadataCell.TOP_BRANCH) {
+                return columnTopBranch;
+            } else if (radius == 1) {
+                return columnBranch;
+            } else {
+                return CellNull.NULL_CELL;
+            }
+        }
+
+        @Override
+        public SimpleVoxmap getLeafCluster() {
+            return LeafClusters.COLUMN;
+        }
+
+        @Override
+        public CellSolver getCellSolver() {
+            return columnSolver;
+        }
+
+        @Override
+        public int getDefaultHydration() {
+            return 2;
+        }
+
+    };
+
     public static void register(final Registry<CellKit> registry) {
-        registry.registerAll(DECIDUOUS, CONIFER, ACACIA, DARK_OAK, BARE, PALM, NETHER_FUNGUS, AZALEA, PAD);
+        registry.registerAll(DECIDUOUS, CONIFER, ACACIA, DARK_OAK, BARE, PALM, NETHER_FUNGUS, AZALEA, PAD, COLUMN);
     }
 
     /**

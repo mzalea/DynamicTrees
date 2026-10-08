@@ -236,6 +236,21 @@ public class LeafClusters {
 
     }).setCenter(new BlockPos(2, 1, 2));
 
+    /** What {@link CellKits#COLUMN} grows around one twig: one block to each side and one above. */
+    public static final SimpleVoxmap COLUMN = new SimpleVoxmap(3, 2, 3, new byte[]{
+
+            //Layer 0(Bottom)
+            0, 1, 0,
+            1, 0, 1,
+            0, 1, 0,
+
+            //Layer 1 (Top)
+            0, 0, 0,
+            0, 1, 0,
+            0, 0, 0
+
+    }).setCenter(new BlockPos(1, 0, 1));
+
     /** What {@link CellKits#PAD} grows around one twig; generated from the automaton, not drawn by hand. */
     public static final SimpleVoxmap PAD = new SimpleVoxmap(7, 2, 7, new byte[]{
 
