@@ -31,7 +31,7 @@ public final class NhRenderConfig {
         MOSS = b.comment("Moss on the lowest blocks of thick trunks.").define("moss", true);
         b.pop();
         b.push("leaves");
-        LEAF_FRINGE = b.comment("Ragged overhangs on the outer leaves and a short hanging fringe underneath (Fancy graphics only).").define("fringe", true);
+        LEAF_FRINGE = b.comment("Ragged overhangs on the outer leaves and a short hanging fringe underneath (Fancy graphics only; off by default: it costs about a fifth of the frame rate on weak GPUs).").define("fringe", false);
         LEAF_DEPTH_SHADE = b.comment("How much darker each step deeper into the crown is (0 = flat).").defineInRange("depthShade", 0.035, 0.0, 0.2);
         FRINGE_LIGHTEN = b.comment("How much lighter the fringe is than the leaf it hangs from.").defineInRange("fringeLighten", 0.06, 0.0, 0.3);
         FOLIAGE_GRASS_BLEND = b.comment("Share of the ground's grass colour mixed into biome-tinted leaves, so trees and ground match.").defineInRange("grassBlend", 0.35, 0.0, 1.0);
